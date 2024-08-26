@@ -40,3 +40,12 @@ func NewController() *Controller {
 func (controller *Controller) AddClient(client Client) {
 	controller.clients = append(controller.clients, client)
 }
+
+func (controller *Controller) RemoveClient(client Client) {
+    for i, c := range controller.clients {
+        if c.id == client.id {
+            controller.clients = append(controller.clients[:i], controller.clients[i+1:]...)
+            break
+        }
+    }
+}

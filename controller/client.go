@@ -3,12 +3,9 @@ package controller
 import "github.com/gorilla/websocket"
 
 type Client struct {
-	
+	id string
 	controller *Controller
-
-	// The websocket connection.
 	conn *websocket.Conn
-
-	// Buffered channel of outbound messages.
+	// Buffered func of outbound messages.
 	send func(int, []byte)
 }

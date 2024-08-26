@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+
+	"github.com/lucsky/cuid"
 )
 
 func (controller *Controller) Subscribe(w http.ResponseWriter, r *http.Request) {
@@ -14,11 +16,15 @@ func (controller *Controller) Subscribe(w http.ResponseWriter, r *http.Request) 
 		log.Println(err)
 		return
 	}
-	client := &Client{controller: controller, conn: conn, send: func(messageType int, message []byte) {
-		if err := conn.WriteMessage(messageType, message); err != nil {
-			log.Println(err)
-			return
-		}
+	client := &Client{
+		id: cuid.New(),
+		controller: controller,
+		conn: conn,
+		send: func(messageType int, message []byte) {
+			if err := conn.WriteMessage(messageType, message); err != nil {
+				log.Println(err)
+				return
+			}
 	}}
 	controller.AddClient(*client)
 	go func()  {
