@@ -1,7 +1,7 @@
 package main
 
 import (
-	"PrayerService/controller"
+	handlers "PrayerService/controller"
 	"fmt"
 	"net/http"
 	"os"
@@ -9,7 +9,7 @@ import (
 
 
 func main()  {
-	controller := controller.NewController()
+	controller := handlers.NewController()
 	port := func() string {
 		if len(os.Getenv("PORT")) > 0 {
 			return os.Getenv("PORT")
