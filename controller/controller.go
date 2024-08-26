@@ -1,9 +1,11 @@
 package controller
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/gorilla/websocket"
+	"github.com/joho/godotenv"
 )
 
 type Controller struct {
@@ -27,6 +29,10 @@ func NewController() *Controller {
         for _, client := range c.clients {
             client.send(messageType, message)
         }
+    }
+    err := godotenv.Load()
+    if err != nil {
+      log.Println("Error loading .env file")
     }
     return c
 }
