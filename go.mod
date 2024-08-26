@@ -1,9 +1,9 @@
 module PrayerService
 
-go 1.21.3
+go 1.23
 
 require (
-	github.com/gorilla/websocket v1.5.3 // indirect
-	github.com/joho/godotenv v1.5.1 // indirect
-	github.com/lucsky/cuid v1.2.1 // indirect
+	github.com/gorilla/websocket v1.5.3
+	github.com/joho/godotenv v1.5.1
+	github.com/lucsky/cuid v1.2.1
 )
