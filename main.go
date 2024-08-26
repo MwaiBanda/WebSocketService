@@ -18,6 +18,9 @@ func main()  {
 		}
 	}()
 	http.HandleFunc("/subscribe", controller.Subscribe)
+	http.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
+		writer.Write([]byte("Websocket server is running"))
+	})
 	if err := http.ListenAndServe(":" + port, nil); err != nil {
 		fmt.Println("Server error:", err)
 	}
