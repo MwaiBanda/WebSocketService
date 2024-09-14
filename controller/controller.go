@@ -1,13 +1,16 @@
 package controller
 
 import (
+	"PrayerService/model"
 	"net/http"
+
 	"github.com/gorilla/websocket"
 )
 
 type Controller struct {
 	Upgrader websocket.Upgrader
 	clients  []Client
+    prayers []model.Prayer
 	broadcast func(int, []byte)
 }
 
@@ -42,3 +45,4 @@ func (controller *Controller) RemoveClient(client Client) {
         }
     }
 }
+
