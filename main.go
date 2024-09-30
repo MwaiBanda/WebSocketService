@@ -21,6 +21,7 @@ func main()  {
 		port = "8080"
 	}
 	http.HandleFunc("/subscribe", controller.Subscribe)
+	http.HandleFunc("/prayer", controller.PostPrayer)
 	http.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
 		writer.Write([]byte("Websocket server is running"))
 	})

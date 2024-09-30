@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -16,16 +17,24 @@ func (controller *Controller) Subscribe(w http.ResponseWriter, r *http.Request) 
 		log.Println(err)
 		return
 	}
+	clientId := cuid.New()
+	deviceId := r.Header.Get("Device_id")
 	client := &Client{
-		id: cuid.New(),
+		id: clientId,
+		deviceId: deviceId,
 		controller: controller,
 		conn: conn,
 		send: func(messageType int, message []byte) {
+			
 			if err := conn.WriteMessage(messageType, message); err != nil {
-				log.Println(err)
+				// controller.RemoveClient(clientId)
+				conn.Close()
+				log.Println("client.send", err)
 				return
 			}
 	}}
+	p, _ := json.Marshal(controller.prayers)
+	client.send(1, p)
 	controller.AddClient(*client)
 	go func()  {
 		defer func() {
@@ -36,9 +45,11 @@ func (controller *Controller) Subscribe(w http.ResponseWriter, r *http.Request) 
 		for {
 			messageType, message, err := conn.ReadMessage()
 			fmt.Println("Received message")
-			fmt.Println(messageType)
+			fmt.Println("Message Type:", messageType)
 			fmt.Println(string(message))
 			if err != nil {
+				// controller.RemoveClient(clientId)
+				conn.Close()
 				log.Println(err)
 				return
 			}

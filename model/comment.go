@@ -1,7 +1,7 @@
 package model
 
 type Comment struct {
-	ID        string `json:"id"`
-	PrayerID  string `json:"prayer_id"`
+	ID        int `json:"id"`
+	PrayerID  int `json:"prayer_id"`
 	Comment   string `json:"comment"`
 }
