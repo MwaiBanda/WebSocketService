@@ -30,9 +30,8 @@ func (controller *Controller) Subscribe(w http.ResponseWriter, r *http.Request) 
 		controller: controller,
 		conn: conn,
 		send: func(messageType int, message []byte) {
-			
 			if err := conn.WriteMessage(messageType, message); err != nil {
-				controller.RemoveClient(clientId)
+				// controller.RemoveClient(clientId)
 				conn.Close()
 				log.Println("client.send", err)
 				return
@@ -55,7 +54,7 @@ func (controller *Controller) Subscribe(w http.ResponseWriter, r *http.Request) 
 			fmt.Println("Message Type:", messageType)
 			fmt.Println(string(message))
 			if err != nil {
-				controller.RemoveClient(clientId)
+				// controller.RemoveClient(clientId)
 				conn.Close()
 				log.Println(err)
 				return
