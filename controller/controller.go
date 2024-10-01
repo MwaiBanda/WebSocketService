@@ -43,37 +43,40 @@ func NewController() *Controller {
         clients: []Client{},
     }
     c.broadcast = func(messageType int, message []byte) {
-        log.Println("Broadcasting message")
-        for _, client := range c.clients {
-            log.Println("Sending message to client")
-            log.Println(client.id)
-            log.Println(client.deviceId)
-           
-            event := model.Event{}
-            if err := json.Unmarshal(message, &event); err != nil {
+        event := model.Event{}
+        if err := json.Unmarshal(message, &event); err != nil {
+            log.Println(err)
+        }
+        if event.Type == "prayer" {
+            prayer := model.Prayer{}
+            if err := json.Unmarshal([]byte(event.Data), &prayer); err != nil {
                 log.Println(err)
             }
-            if event.Type == "prayer" {
-                prayer := model.Prayer{}
-                if err := json.Unmarshal([]byte(event.Data), &prayer); err != nil {
-                    log.Println(err)
-                }
-                c.prayers = append(c.prayers, prayer)
-                prayers, _ := json.Marshal(c.prayers)
+            c.prayers = append(c.prayers, prayer)
+            prayers, _ := json.Marshal(c.prayers)
+            for _, client := range c.clients {
                 client.send(messageType, prayers)
-            } else if event.Type == "comment" {
-                comment := model.Comment{}
-                if err := json.Unmarshal([]byte(event.Data), &comment); err != nil {
-                    log.Println(err)
+                log.Println("Broadcasting message")
+                log.Println("Sending message to client")
+                log.Println(client.deviceId)
+            }
+        } else if event.Type == "comment" {
+            comment := model.Comment{}
+            if err := json.Unmarshal([]byte(event.Data), &comment); err != nil {
+                log.Println(err)
+            }
+            for i, p := range c.prayers {
+                if p.ID == comment.PrayerID {
+                    c.prayers[i].Comments = append(c.prayers[i].Comments, comment)
+                    break
                 }
-                for i, p := range c.prayers {
-                    if p.ID == comment.PrayerID {
-                        c.prayers[i].Comments = append(c.prayers[i].Comments, comment)
-                        break
-                    }
-                }
-                prayers, _ := json.Marshal(c.prayers)
+            }
+            prayers, _ := json.Marshal(c.prayers)
+            for _, client := range c.clients {
                 client.send(messageType, prayers)
+                log.Println("Broadcasting message")
+                log.Println("Sending message to client")
+                log.Println(client.deviceId)
             }
         }
     }

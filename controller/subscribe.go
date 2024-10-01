@@ -19,6 +19,11 @@ func (controller *Controller) Subscribe(w http.ResponseWriter, r *http.Request) 
 	}
 	clientId := cuid.New()
 	deviceId := r.Header.Get("Device_id")
+	for name, values := range r.Header {
+		for _, value := range values {
+			fmt.Println(name, value)
+		}
+	}
 	client := &Client{
 		id: clientId,
 		deviceId: deviceId,
@@ -27,7 +32,7 @@ func (controller *Controller) Subscribe(w http.ResponseWriter, r *http.Request) 
 		send: func(messageType int, message []byte) {
 			
 			if err := conn.WriteMessage(messageType, message); err != nil {
-				// controller.RemoveClient(clientId)
+				controller.RemoveClient(clientId)
 				conn.Close()
 				log.Println("client.send", err)
 				return
@@ -36,6 +41,7 @@ func (controller *Controller) Subscribe(w http.ResponseWriter, r *http.Request) 
 	p, _ := json.Marshal(controller.prayers)
 	client.send(1, p)
 	controller.AddClient(*client)
+
 	go func()  {
 		defer func() {
 			fmt.Println("Lost connection")
@@ -48,7 +54,7 @@ func (controller *Controller) Subscribe(w http.ResponseWriter, r *http.Request) 
 			fmt.Println("Message Type:", messageType)
 			fmt.Println(string(message))
 			if err != nil {
-				// controller.RemoveClient(clientId)
+				controller.RemoveClient(clientId)
 				conn.Close()
 				log.Println(err)
 				return
