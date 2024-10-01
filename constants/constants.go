@@ -2,8 +2,8 @@ package constants
 
 const (
 	// Event types
-	PRAYER = "prayer"
-	COMMENT = "comment"
+	PRAYER = "PRAYER"
+	COMMENT = "COMMENT"
 	// Event actions
 	ADD = "ADD"
 	DELETE = "DELETE"

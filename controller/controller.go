@@ -82,7 +82,7 @@ func GetInstance() *Controller {
                     log.Println(client.deviceId)
                 }()
             }
-            waitGroup.Wait()
+            go waitGroup.Wait()
 		} else if event.Type == constants.COMMENT {
             if event.Action == constants.ADD {
                 comment := model.Comment{}
@@ -105,13 +105,14 @@ func GetInstance() *Controller {
 			for _, client := range c.clients {
                 waitGroup.Add(1)
                 go func() {
+                    defer waitGroup.Done()
                     client.send(messageType, prayers)
                     log.Println("Broadcasting message")
                     log.Println("Sending message to client")
                     log.Println(client.deviceId)
                 }()
 			}
-            waitGroup.Wait()
+            go waitGroup.Wait()
 		}
 	}
 	return c
