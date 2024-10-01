@@ -57,7 +57,16 @@ func GetInstance() *Controller {
                 }
                 c.prayers = append(c.prayers, prayer)
             } else if event.Action == constants.DELETE {
-
+                prayer := model.Prayer{}
+                if err := json.Unmarshal([]byte(event.Data), &prayer); err != nil {
+                    log.Println(err)
+                }
+                for i, p := range c.prayers {
+                    if p.ID == prayer.ID {
+                        c.prayers = append(c.prayers[:i], c.prayers[i+1:]...)
+                        break
+                    }
+                }
             } else if event.Action == constants.UPDATE {
                 
             }
