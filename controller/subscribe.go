@@ -37,12 +37,13 @@ func (controller *Controller) Subscribe(w http.ResponseWriter, r *http.Request) 
 				log.Println("client.send", err)
 				return
 			}
-	}}
-	p, _ := json.Marshal(controller.prayers)
-	client.send(1, p)
+		},
+	}
+	storedPrayers, _ := json.Marshal(controller.prayers)
+	client.send(1, storedPrayers)
 	controller.AddClient(*client)
 
-	go func()  {
+	go func() {
 		defer func() {
 			fmt.Println("Lost connection")
 			fmt.Println(conn.RemoteAddr().String())
@@ -62,5 +63,4 @@ func (controller *Controller) Subscribe(w http.ResponseWriter, r *http.Request) 
 			controller.broadcast(messageType, message)
 		}
 	}()
-
 }
