@@ -2,34 +2,40 @@ package controller
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/lucsky/cuid"
 )
 
 func (controller *Controller) Subscribe(w http.ResponseWriter, r *http.Request) {
 	conn, err := controller.Upgrader.Upgrade(w, r, nil)
-	fmt.Println("New connection")
-	fmt.Println(conn.RemoteAddr().String())
+	log.Println("New connection:", conn.RemoteAddr().String())
 	if err != nil {
 		log.Println(err)
 		return
 	}
-	clientId := cuid.New()
 	deviceId := r.Header.Get("Device_id")
-	for name, values := range r.Header {
-		for _, value := range values {
-			fmt.Println(name, value)
+	if len(deviceId) == 0 {
+		deviceId = cuid.New()
+	}
+
+	if os.Getenv("DEBUG") == "true" {
+		log.Println("Headers")
+		for name, values := range r.Header {
+			for _, value := range values {
+				log.Println(name, value)
+			}
 		}
 	}
+	
 	client := &Client{
-		id: clientId,
-		deviceId: deviceId,
-		send: func(messageType int, message []byte) {
+		ID: deviceId,
+		IP: conn.RemoteAddr().String(),
+		Send: func(messageType int, message []byte) {
 			if err := conn.WriteMessage(messageType, message); err != nil {
-				controller.RemoveClient(clientId)
+				controller.RemoveClient(deviceId)
 				conn.Close()
 				log.Println("client.send", err)
 				return
@@ -37,22 +43,22 @@ func (controller *Controller) Subscribe(w http.ResponseWriter, r *http.Request) 
 		},
 	}
 	storedPrayers, _ := json.Marshal(controller.prayers)
-	client.send(1, storedPrayers)
+	client.Send(1, storedPrayers)
 	controller.AddClient(*client)
 
 	go func() {
 		defer func() {
-			fmt.Println("Lost connection")
-			fmt.Println(conn.RemoteAddr().String())
+			log.Println("Lost connection")
+			log.Println(conn.RemoteAddr().String())
 			conn.Close()
 		}()
 		for {
 			messageType, message, err := conn.ReadMessage()
-			fmt.Println("Received message")
-			fmt.Println("Message Type:", messageType)
-			fmt.Println(string(message))
+			log.Println("Received message")
+			log.Println("Message Type:", messageType)
+			log.Println(string(message))
 			if err != nil {
-				controller.RemoveClient(clientId)
+				controller.RemoveClient(deviceId)
 				conn.Close()
 				log.Println(err)
 				return

@@ -4,7 +4,6 @@ import (
 	constants "PrayerService/constants"
 	"PrayerService/model"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"sync"
@@ -50,69 +49,69 @@ func GetInstance() *Controller {
 			log.Println(err)
 		}
 		if event.Type == constants.PRAYER {
-            if event.Action == constants.ADD {
-                prayer := model.Prayer{}
-                if err := json.Unmarshal([]byte(event.Data), &prayer); err != nil {
-                    log.Println(err)
-                }
-                c.prayers = append(c.prayers, prayer)
-            } else if event.Action == constants.DELETE {
-                prayer := model.Prayer{}
-                if err := json.Unmarshal([]byte(event.Data), &prayer); err != nil {
-                    log.Println(err)
-                }
-                for i, p := range c.prayers {
-                    if p.ID == prayer.ID {
-                        c.prayers = append(c.prayers[:i], c.prayers[i+1:]...)
-                        break
-                    }
-                }
-            } else if event.Action == constants.UPDATE {
-                
-            }
-            prayers, _ := json.Marshal(c.prayers)
-            var waitGroup sync.WaitGroup
-            for _, client := range c.clients {
-                waitGroup.Add(1)
-                go func() {
-                    defer waitGroup.Done()
-                    client.send(messageType, prayers)
-                    log.Println("Broadcasting message")
-                    log.Println("Sending message to client")
-                    log.Println(client.deviceId)
-                }()
-            }
-            go waitGroup.Wait()
-		} else if event.Type == constants.COMMENT {
-            if event.Action == constants.ADD {
-                comment := model.Comment{}
-                if err := json.Unmarshal([]byte(event.Data), &comment); err != nil {
-                    log.Println(err)
-                }
-                for i, p := range c.prayers {
-                    if p.ID == comment.PrayerID {
-                        c.prayers[i].Comments = append(c.prayers[i].Comments, comment)
-                        break
-                    }
-                }
-            } else if event.Action == constants.DELETE {
+			if event.Action == constants.ADD {
+				prayer := model.Prayer{}
+				if err := json.Unmarshal([]byte(event.Data), &prayer); err != nil {
+					log.Println(err)
+				}
+				c.prayers = append(c.prayers, prayer)
+			} else if event.Action == constants.DELETE {
+				prayer := model.Prayer{}
+				if err := json.Unmarshal([]byte(event.Data), &prayer); err != nil {
+					log.Println(err)
+				}
+				for i, p := range c.prayers {
+					if p.ID == prayer.ID {
+						c.prayers = append(c.prayers[:i], c.prayers[i+1:]...)
+						break
+					}
+				}
+			} else if event.Action == constants.UPDATE {
 
-            } else if event.Action == constants.UPDATE {
-                
-            }
-			prayers, _ := json.Marshal(c.prayers)
-            var waitGroup sync.WaitGroup
-			for _, client := range c.clients {
-                waitGroup.Add(1)
-                go func() {
-                    defer waitGroup.Done()
-                    client.send(messageType, prayers)
-                    log.Println("Broadcasting message")
-                    log.Println("Sending message to client")
-                    log.Println(client.deviceId)
-                }()
 			}
-            go waitGroup.Wait()
+			prayers, _ := json.Marshal(c.prayers)
+			var waitGroup sync.WaitGroup
+			for _, client := range c.clients {
+				waitGroup.Add(1)
+				go func() {
+					defer waitGroup.Done()
+					client.Send(messageType, prayers)
+					log.Println("Broadcasting message")
+					log.Println("Sending message to client")
+					log.Println(client.ID)
+				}()
+			}
+			go waitGroup.Wait()
+		} else if event.Type == constants.COMMENT {
+			if event.Action == constants.ADD {
+				comment := model.Comment{}
+				if err := json.Unmarshal([]byte(event.Data), &comment); err != nil {
+					log.Println(err)
+				}
+				for i, p := range c.prayers {
+					if p.ID == comment.PrayerID {
+						c.prayers[i].Comments = append(c.prayers[i].Comments, comment)
+						break
+					}
+				}
+			} else if event.Action == constants.DELETE {
+
+			} else if event.Action == constants.UPDATE {
+
+			}
+			prayers, _ := json.Marshal(c.prayers)
+			var waitGroup sync.WaitGroup
+			for _, client := range c.clients {
+				waitGroup.Add(1)
+				go func() {
+					defer waitGroup.Done()
+					client.Send(messageType, prayers)
+					log.Println("Broadcasting message")
+					log.Println("Sending message to client")
+					log.Println(client.ID)
+				}()
+			}
+			go waitGroup.Wait()
 		}
 	}
 	return c
@@ -121,18 +120,18 @@ func GetInstance() *Controller {
 func (controller *Controller) AddClient(client Client) {
 	filtered := []Client{}
 	for _, c := range controller.clients {
-		if c.deviceId != client.deviceId {
+		if c.ID != client.ID {
 			filtered = append(filtered, c)
 		}
 	}
 	controller.clients = filtered
 	controller.clients = append(controller.clients, client)
-	fmt.Println("Number of clients:", len(controller.clients))
+	log.Println("Number of clients:", len(controller.clients))
 }
 
 func (controller *Controller) RemoveClient(clientId string) {
 	for _, c := range controller.clients {
-		if c.id != clientId {
+		if c.ID != clientId {
 			controller.clients = append(controller.clients, c)
 			break
 		}
