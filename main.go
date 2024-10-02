@@ -19,10 +19,10 @@ func main() {
 	if len(port) == 0 {
 		port = "8080"
 	}
+	
 	http.HandleFunc("/subscribe", controller.Subscribe)
-	http.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
-		writer.Write([]byte("Websocket server is running"))
-	})
+	http.Handle("/", http.FileServer(http.Dir("moderator/dist/")))
+
 	log.Println("Server started on port", port)
 	if err := http.ListenAndServe(":"+port, nil); err != nil {
 		log.Fatalln("Server error:", err)
