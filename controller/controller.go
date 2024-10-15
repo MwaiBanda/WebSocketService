@@ -9,7 +9,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"sync"
 
 	"github.com/gorilla/websocket"
 	"github.com/machinebox/graphql"
@@ -36,11 +35,25 @@ func GetInstance() *Controller {
 				ID:          1,
 				Title:       "Healing for my dog",
 				Description: "I need prayer for my dog, he is sick",
+				User: model.User{
+					UserId:   "1",
+					FirstName: "John",
+					LastName:  "Doe",
+					UserName: "johndoe",
+					ScreenName: "John Doe",
+				},
 				Comments: []model.Comment{
 					{
 						ID:       1,
 						PrayerID: 1,
 						Comment:  "He will be healed in Jesus name",
+						User: model.User{
+							UserId:   "1",
+							FirstName: "John",
+							LastName:  "Doe",
+							UserName: "johndoe",
+							ScreenName: "John Doe",
+						},
 					},
 				},
 			},
@@ -58,6 +71,7 @@ func GetInstance() *Controller {
 				if err := json.Unmarshal([]byte(event.Data), &prayer); err != nil {
 					log.Println(err)
 				}
+				prayer.SetUser(user)
 				c.prayers = append(c.prayers, prayer)
 			} else if event.Action == constants.DELETE {
 				prayer := model.Prayer{}
@@ -74,24 +88,19 @@ func GetInstance() *Controller {
 
 			}
 			prayers, _ := json.Marshal(c.prayers)
-			var waitGroup sync.WaitGroup
 			for _, client := range c.clients {
-				waitGroup.Add(1)
-				go func() {
-					defer waitGroup.Done()
-					client.Send(messageType, prayers)
-					log.Println("Broadcasting message")
-					log.Println("Sending message to client")
-					log.Println(user.UserName)
-				}()
+				client.Send(messageType, prayers)
+				log.Println("Broadcasting message")
+				log.Println("Sending message to client")
+				log.Println(user.UserName)
 			}
-			go waitGroup.Wait()
 		} else if event.Type == constants.COMMENT {
 			if event.Action == constants.ADD {
 				comment := model.Comment{}
 				if err := json.Unmarshal([]byte(event.Data), &comment); err != nil {
 					log.Println(err)
 				}
+				comment.SetUser(user)
 				for i, p := range c.prayers {
 					if p.ID == comment.PrayerID {
 						c.prayers[i].Comments = append(c.prayers[i].Comments, comment)
@@ -104,18 +113,12 @@ func GetInstance() *Controller {
 
 			}
 			prayers, _ := json.Marshal(c.prayers)
-			var waitGroup sync.WaitGroup
 			for _, client := range c.clients {
-				waitGroup.Add(1)
-				go func() {
-					defer waitGroup.Done()
-					client.Send(messageType, prayers)
-					log.Println("Broadcasting message")
-					log.Println("Sending message to client")
-					log.Println(user.UserName)
-				}()
+				client.Send(messageType, prayers)
+				log.Println("Broadcasting message")
+				log.Println("Sending message to client")
+				log.Println(user.UserName)
 			}
-			go waitGroup.Wait()
 		}
 	}
 	return c

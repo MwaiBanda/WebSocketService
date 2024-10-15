@@ -5,5 +5,9 @@ type Prayer struct {
 	Title       string `json:"title"`
 	Description string `json:"description"`
 	Comments    []Comment `json:"comments"`
+	User		User `json:"user"`
 }
 
+func (u *Prayer) SetUser(user User) {
+	u.User = user
+  }
