@@ -1,10 +1,12 @@
 package controller
 
 import (
+	"PrayerService/model"
 	"encoding/json"
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 
 	"github.com/lucsky/cuid"
 )
@@ -20,8 +22,8 @@ func (controller *Controller) Subscribe(w http.ResponseWriter, r *http.Request) 
 	if len(deviceId) == 0 {
 		deviceId = cuid.New()
 	}
-
-	if os.Getenv("DEBUG") == "true" {
+	isDebug, _ := strconv.ParseBool(os.Getenv("DEBUG"))
+	if isDebug {
 		log.Println("Headers")
 		for name, values := range r.Header {
 			for _, value := range values {
@@ -29,7 +31,8 @@ func (controller *Controller) Subscribe(w http.ResponseWriter, r *http.Request) 
 			}
 		}
 	}
-	
+	user, _ := r.Context().Value(UserKey).(model.User)
+	log.Println("User:", user)
 	client := &Client{
 		ID: deviceId,
 		IP: conn.RemoteAddr().String(),
@@ -63,7 +66,7 @@ func (controller *Controller) Subscribe(w http.ResponseWriter, r *http.Request) 
 				log.Println(err)
 				return
 			}
-			controller.broadcast(messageType, message)
+			controller.broadcast(user, message, messageType)
 		}
 	}()
 }

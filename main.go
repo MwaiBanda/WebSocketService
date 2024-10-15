@@ -20,7 +20,7 @@ func main() {
 		port = "8080"
 	}
 	
-	http.HandleFunc("/subscribe", controller.Subscribe)
+	http.HandleFunc("/subscribe", controller.Auth(controller.Subscribe))
 	http.Handle("/", http.FileServer(http.Dir("moderator/dist/")))
 
 	log.Println("Server started on port", port)
@@ -28,3 +28,4 @@ func main() {
 		log.Fatalln("Server error:", err)
 	} 
 }
+

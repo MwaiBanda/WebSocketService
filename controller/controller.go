@@ -3,19 +3,23 @@ package controller
 import (
 	constants "PrayerService/constants"
 	"PrayerService/model"
+	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"sync"
 
 	"github.com/gorilla/websocket"
+	"github.com/machinebox/graphql"
 )
 
 type Controller struct {
-	Upgrader  websocket.Upgrader
-	clients   []Client
-	prayers   []model.Prayer
-	broadcast func(int, []byte)
+	Upgrader   websocket.Upgrader
+	clients    []Client
+	prayers    []model.Prayer
+	broadcast  func(model.User, []byte, int)
 }
 
 func GetInstance() *Controller {
@@ -43,7 +47,7 @@ func GetInstance() *Controller {
 		},
 		clients: []Client{},
 	}
-	c.broadcast = func(messageType int, message []byte) {
+	c.broadcast = func(user model.User, message []byte, messageType int) {
 		event := model.Event{}
 		if err := json.Unmarshal(message, &event); err != nil {
 			log.Println(err)
@@ -78,7 +82,7 @@ func GetInstance() *Controller {
 					client.Send(messageType, prayers)
 					log.Println("Broadcasting message")
 					log.Println("Sending message to client")
-					log.Println(client.ID)
+					log.Println(user.UserName)
 				}()
 			}
 			go waitGroup.Wait()
@@ -108,7 +112,7 @@ func GetInstance() *Controller {
 					client.Send(messageType, prayers)
 					log.Println("Broadcasting message")
 					log.Println("Sending message to client")
-					log.Println(client.ID)
+					log.Println(user.UserName)
 				}()
 			}
 			go waitGroup.Wait()
@@ -136,4 +140,54 @@ func (controller *Controller) RemoveClient(clientId string) {
 			break
 		}
 	}
+}
+
+type contextKey string
+
+const UserKey contextKey = "user"
+
+func (controller *Controller) Auth(f http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		token := r.Header.Get("Token")
+		if len(token) == 0 {
+			log.Println("Unauthorized", r.URL.Path)
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		log.Println("Token:", token)
+		log.Println(r.URL.Path)
+		user, err := controller.getProfile(token)
+		if err != nil {
+			log.Println("Unauthorized", r.URL.Path)
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+		req := r.WithContext(context.WithValue(r.Context(), UserKey, user))
+		f(w, req)
+	}
+}
+
+func (controller *Controller) getProfile(token string) (model.User, error) {
+	client := graphql.NewClient(os.Getenv("GRAPHQL_URL"))
+	req := graphql.NewRequest(`
+		query Query {
+            getUserProfile {
+                lastName
+                firstName
+                email
+                screenName
+                userName
+                userId
+            }
+        }
+	`)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", token)
+	ctx := context.Background()
+	var respData model.UserResponse
+	if err := client.Run(ctx, req, &respData); err != nil {
+		return model.User{}, fmt.Errorf("failed to get user profile: %v", err)
+	}
+	return respData.GetUserProfile, nil
 }
