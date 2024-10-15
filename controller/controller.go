@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 
 	"github.com/gorilla/websocket"
 	"github.com/machinebox/graphql"
@@ -17,7 +18,7 @@ import (
 type Controller struct {
 	Upgrader   websocket.Upgrader
 	boards    []model.Board
-	broadcast  func(model.User, []byte, int)
+	broadcast  func(string, model.User, []byte, int)
 }
 
 func GetInstance() *Controller {
@@ -65,8 +66,9 @@ func GetInstance() *Controller {
 			},
 		},
 	}
-	c.broadcast = func(user model.User, message []byte, messageType int) {
+	c.broadcast = func(boardId string, user model.User, message []byte, messageType int) {
 		event := model.Event{}
+		boardIndex, _ := c.findBoard(boardId)
 		if err := json.Unmarshal(message, &event); err != nil {
 			log.Println(err)
 		}
@@ -77,23 +79,23 @@ func GetInstance() *Controller {
 					log.Println(err)
 				}
 				prayer.SetUser(user)
-				c.boards[0].Prayers = append(c.boards[0].Prayers, prayer)
+				c.boards[boardIndex].Prayers = append(c.boards[boardIndex].Prayers, prayer)
 			} else if event.Action == constants.DELETE {
 				prayer := model.Prayer{}
 				if err := json.Unmarshal([]byte(event.Data), &prayer); err != nil {
 					log.Println(err)
 				}
-				for i, p := range c.boards[0].Prayers {
+				for i, p := range c.boards[boardIndex].Prayers {
 					if p.ID == prayer.ID {
-						c.boards[0].Prayers = append(c.boards[0].Prayers[:i], c.boards[0].Prayers[i+1:]...)
+						c.boards[boardIndex].Prayers = append(c.boards[boardIndex].Prayers[:i], c.boards[boardIndex].Prayers[i+1:]...)
 						break
 					}
 				}
 			} else if event.Action == constants.UPDATE {
 
 			}
-			prayers, _ := json.Marshal(c.boards[0].Prayers)
-			for _, client := range c.boards[0].Clients {
+			prayers, _ := json.Marshal(c.boards[boardIndex].Prayers)
+			for _, client := range c.boards[boardIndex].Clients {
 				client.Send(messageType, prayers)
 				log.Println("Broadcasting message")
 				log.Println("Sending message to client")
@@ -106,9 +108,9 @@ func GetInstance() *Controller {
 					log.Println(err)
 				}
 				comment.SetUser(user)
-				for i, p := range c.boards[0].Prayers {
+				for i, p := range c.boards[boardIndex].Prayers {
 					if p.ID == comment.PrayerID {
-						c.boards[0].Prayers[i].Comments = append(c.boards[0].Prayers[i].Comments, comment)
+						c.boards[boardIndex].Prayers[i].Comments = append(c.boards[boardIndex].Prayers[i].Comments, comment)
 						break
 					}
 				}
@@ -117,8 +119,8 @@ func GetInstance() *Controller {
 			} else if event.Action == constants.UPDATE {
 
 			}
-			prayers, _ := json.Marshal(c.boards[0].Prayers)
-			for _, client := range c.boards[0].Clients {
+			prayers, _ := json.Marshal(c.boards[boardIndex].Prayers)
+			for _, client := range c.boards[boardIndex].Clients {
 				client.Send(messageType, prayers)
 				log.Println("Broadcasting message")
 				log.Println("Sending message to client")
@@ -129,22 +131,33 @@ func GetInstance() *Controller {
 	return c
 }
 
+func (controller *Controller) findBoard(boardId string) (int, model.Board) {
+	id, _ := strconv.Atoi(boardId)
+	for i, board := range controller.boards {
+		if board.ID == id {
+			return i, board
+		}
+	}
+	return 0, model.Board{}
+}
 func (controller *Controller) AddClient(client model.Client) {
 	filtered := []model.Client{}
-	for _, c := range controller.boards[0].Clients {
+	boardIndex, _ := controller.findBoard(client.BoardID)
+	for _, c := range controller.boards[boardIndex].Clients {
 		if c.ID != client.ID {
 			filtered = append(filtered, c)
 		}
 	}
-	controller.boards[0].Clients = filtered
-	controller.boards[0].Clients = append(controller.boards[0].Clients, client)
-	log.Println("Number of clients:", len(controller.boards[0].Clients))
+	controller.boards[boardIndex].Clients = filtered
+	controller.boards[boardIndex].Clients = append(controller.boards[boardIndex].Clients, client)
+	log.Println("Number of clients:", len(controller.boards[boardIndex].Clients))
 }
 
-func (controller *Controller) RemoveClient(clientId string) {
-	for _, c := range controller.boards[0].Clients {
-		if c.ID != clientId {
-			controller.boards[0].Clients = append(controller.boards[0].Clients, c)
+func (controller *Controller) RemoveClient(client model.Client) {
+	boardIndex, _ := controller.findBoard(client.BoardID)
+	for _, c := range controller.boards[boardIndex].Clients {
+		if c.ID != client.ID {
+			controller.boards[boardIndex].Clients = append(controller.boards[boardIndex].Clients, c)
 			break
 		}
 	}

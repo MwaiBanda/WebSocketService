@@ -19,8 +19,12 @@ func (controller *Controller) Subscribe(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	deviceId := r.Header.Get("Device_id")
+	boardId := r.Header.Get("Board")
 	if len(deviceId) == 0 {
 		deviceId = cuid.New()
+	}
+	if len(boardId) == 0 {
+		boardId = "1"
 	}
 	isDebug, _ := strconv.ParseBool(os.Getenv("DEBUG"))
 	if isDebug {
@@ -35,17 +39,19 @@ func (controller *Controller) Subscribe(w http.ResponseWriter, r *http.Request) 
 	log.Println("User:", user)
 	client := &model.Client{
 		ID: deviceId,
+		BoardID: boardId,
 		IP: conn.RemoteAddr().String(),
-		Send: func(messageType int, message []byte) {
-			if err := conn.WriteMessage(messageType, message); err != nil {
-				controller.RemoveClient(deviceId)
-				conn.Close()
-				log.Println("client.send", err)
-				return
-			}
-		},
 	}
-	storedPrayers, _ := json.Marshal(controller.boards[0].Prayers)
+	client.Send = func(messageType int, message []byte) {
+		if err := conn.WriteMessage(messageType, message); err != nil {
+			controller.RemoveClient(*client)
+			conn.Close()
+			log.Println("client.send", err)
+			return
+		}
+	}
+	boardIndex, _ := controller.findBoard(boardId)
+	storedPrayers, _ := json.Marshal(controller.boards[boardIndex].Prayers)
 	client.Send(1, storedPrayers)
 	controller.AddClient(*client)
 
@@ -61,12 +67,12 @@ func (controller *Controller) Subscribe(w http.ResponseWriter, r *http.Request) 
 			log.Println("Message Type:", messageType)
 			log.Println(string(message))
 			if err != nil {
-				controller.RemoveClient(deviceId)
+				controller.RemoveClient(*client)
 				conn.Close()
 				log.Println(err)
 				return
 			}
-			controller.broadcast(user, message, messageType)
+			controller.broadcast(boardId, user, message, messageType)
 		}
 	}()
 }
