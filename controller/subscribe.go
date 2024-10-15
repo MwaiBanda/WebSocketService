@@ -33,7 +33,7 @@ func (controller *Controller) Subscribe(w http.ResponseWriter, r *http.Request) 
 	}
 	user, _ := r.Context().Value(UserKey).(model.User)
 	log.Println("User:", user)
-	client := &Client{
+	client := &model.Client{
 		ID: deviceId,
 		IP: conn.RemoteAddr().String(),
 		Send: func(messageType int, message []byte) {
@@ -45,7 +45,7 @@ func (controller *Controller) Subscribe(w http.ResponseWriter, r *http.Request) 
 			}
 		},
 	}
-	storedPrayers, _ := json.Marshal(controller.prayers)
+	storedPrayers, _ := json.Marshal(controller.boards[0].Prayers)
 	client.Send(1, storedPrayers)
 	controller.AddClient(*client)
 

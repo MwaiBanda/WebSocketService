@@ -16,8 +16,7 @@ import (
 
 type Controller struct {
 	Upgrader   websocket.Upgrader
-	clients    []Client
-	prayers    []model.Prayer
+	boards    []model.Board
 	broadcast  func(model.User, []byte, int)
 }
 
@@ -30,23 +29,16 @@ func GetInstance() *Controller {
 				return true
 			},
 		},
-		prayers: []model.Prayer{
+		boards: []model.Board{
 			{
-				ID:          1,
-				Title:       "Healing for my dog",
-				Description: "I need prayer for my dog, he is sick",
-				User: model.User{
-					UserId:   "1",
-					FirstName: "John",
-					LastName:  "Doe",
-					UserName: "johndoe",
-					ScreenName: "John Doe",
-				},
-				Comments: []model.Comment{
+				ID:    1,
+				Title: "General",
+				Prayers: []model.Prayer{
 					{
-						ID:       1,
-						PrayerID: 1,
-						Comment:  "He will be healed in Jesus name",
+						ID:          1,
+						BoardID:          1,
+						Title:       "Healing for my dog",
+						Description: "I need prayer for my dog, he is sick",
 						User: model.User{
 							UserId:   "1",
 							FirstName: "John",
@@ -54,11 +46,24 @@ func GetInstance() *Controller {
 							UserName: "johndoe",
 							ScreenName: "John Doe",
 						},
+						Comments: []model.Comment{
+							{
+								ID:       1,
+								PrayerID: 1,
+								Comment:  "He will be healed in Jesus name",
+								User: model.User{
+									UserId:   "1",
+									FirstName: "John",
+									LastName:  "Doe",
+									UserName: "johndoe",
+									ScreenName: "John Doe",
+								},
+							},
+						},
 					},
-				},
+				}, Clients: []model.Client{}, Boards: []model.Board{},
 			},
 		},
-		clients: []Client{},
 	}
 	c.broadcast = func(user model.User, message []byte, messageType int) {
 		event := model.Event{}
@@ -72,23 +77,23 @@ func GetInstance() *Controller {
 					log.Println(err)
 				}
 				prayer.SetUser(user)
-				c.prayers = append(c.prayers, prayer)
+				c.boards[0].Prayers = append(c.boards[0].Prayers, prayer)
 			} else if event.Action == constants.DELETE {
 				prayer := model.Prayer{}
 				if err := json.Unmarshal([]byte(event.Data), &prayer); err != nil {
 					log.Println(err)
 				}
-				for i, p := range c.prayers {
+				for i, p := range c.boards[0].Prayers {
 					if p.ID == prayer.ID {
-						c.prayers = append(c.prayers[:i], c.prayers[i+1:]...)
+						c.boards[0].Prayers = append(c.boards[0].Prayers[:i], c.boards[0].Prayers[i+1:]...)
 						break
 					}
 				}
 			} else if event.Action == constants.UPDATE {
 
 			}
-			prayers, _ := json.Marshal(c.prayers)
-			for _, client := range c.clients {
+			prayers, _ := json.Marshal(c.boards[0].Prayers)
+			for _, client := range c.boards[0].Clients {
 				client.Send(messageType, prayers)
 				log.Println("Broadcasting message")
 				log.Println("Sending message to client")
@@ -101,9 +106,9 @@ func GetInstance() *Controller {
 					log.Println(err)
 				}
 				comment.SetUser(user)
-				for i, p := range c.prayers {
+				for i, p := range c.boards[0].Prayers {
 					if p.ID == comment.PrayerID {
-						c.prayers[i].Comments = append(c.prayers[i].Comments, comment)
+						c.boards[0].Prayers[i].Comments = append(c.boards[0].Prayers[i].Comments, comment)
 						break
 					}
 				}
@@ -112,8 +117,8 @@ func GetInstance() *Controller {
 			} else if event.Action == constants.UPDATE {
 
 			}
-			prayers, _ := json.Marshal(c.prayers)
-			for _, client := range c.clients {
+			prayers, _ := json.Marshal(c.boards[0].Prayers)
+			for _, client := range c.boards[0].Clients {
 				client.Send(messageType, prayers)
 				log.Println("Broadcasting message")
 				log.Println("Sending message to client")
@@ -124,22 +129,22 @@ func GetInstance() *Controller {
 	return c
 }
 
-func (controller *Controller) AddClient(client Client) {
-	filtered := []Client{}
-	for _, c := range controller.clients {
+func (controller *Controller) AddClient(client model.Client) {
+	filtered := []model.Client{}
+	for _, c := range controller.boards[0].Clients {
 		if c.ID != client.ID {
 			filtered = append(filtered, c)
 		}
 	}
-	controller.clients = filtered
-	controller.clients = append(controller.clients, client)
-	log.Println("Number of clients:", len(controller.clients))
+	controller.boards[0].Clients = filtered
+	controller.boards[0].Clients = append(controller.boards[0].Clients, client)
+	log.Println("Number of clients:", len(controller.boards[0].Clients))
 }
 
 func (controller *Controller) RemoveClient(clientId string) {
-	for _, c := range controller.clients {
+	for _, c := range controller.boards[0].Clients {
 		if c.ID != clientId {
-			controller.clients = append(controller.clients, c)
+			controller.boards[0].Clients = append(controller.boards[0].Clients, c)
 			break
 		}
 	}

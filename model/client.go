@@ -1,4 +1,4 @@
-package controller
+package model
 
 type Client struct {
 	ID   string
