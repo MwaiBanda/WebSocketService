@@ -41,6 +41,7 @@ func (controller *Controller) Subscribe(w http.ResponseWriter, r *http.Request) 
 		ID: deviceId,
 		BoardID: boardId,
 		IP: conn.RemoteAddr().String(),
+		User: user,
 	}
 	client.Send = func(messageType int, message []byte) {
 		if err := conn.WriteMessage(messageType, message); err != nil {
@@ -51,7 +52,7 @@ func (controller *Controller) Subscribe(w http.ResponseWriter, r *http.Request) 
 		}
 	}
 	boardIndex, _ := controller.findBoard(boardId)
-	storedPrayers, _ := json.Marshal(controller.boards[boardIndex].Prayers)
+	storedPrayers, _ := json.Marshal(controller.boards[boardIndex].GetBoardData())
 	client.Send(1, storedPrayers)
 	controller.AddClient(*client)
 
@@ -72,7 +73,7 @@ func (controller *Controller) Subscribe(w http.ResponseWriter, r *http.Request) 
 				log.Println(err)
 				return
 			}
-			controller.broadcast(boardId, user, message, messageType)
+			controller.broadcast(boardId, *client, message, messageType)
 		}
 	}()
 }
