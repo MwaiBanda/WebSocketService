@@ -7,8 +7,24 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+
+	"github.com/lucsky/cuid"
 )
 
+// Subscribe godoc
+// @Summary      User subscribes to a board
+// @Description  This endpoint allows a user to subscribe to a board and receives all messages from the board
+// @Tags         boards
+// @Accept       json
+// @Produce      json
+// @Param		 message	body	model.Event	true	"Event data"
+// @Param		 Board	header		string	true	"Board ID"
+// @Param		 Token	header		string	true	"Authentication header"
+// @Success      200  				{object}  	model.Board
+// @Failure		 400				{string}	string	"Bad Request"
+// @Failure		 401				{string}	string	"Unauthorized"
+// @Failure		 500				{string}	string	"Internal Server Error"
+// @Router       /subscribe [get]
 func (controller *Controller) Subscribe(w http.ResponseWriter, r *http.Request) {
 	conn, err := controller.Upgrader.Upgrade(w, r, nil)
 	log.Println("New connection:", conn.RemoteAddr().String())
@@ -30,23 +46,23 @@ func (controller *Controller) Subscribe(w http.ResponseWriter, r *http.Request) 
 		}
 	}
 	user, _ := r.Context().Value(UserKey).(model.User)
-	log.Println("User:", user)
+	boardIndex, board := controller.findBoard(boardId)
 	client := &model.Client{
-		ID: user.UserId + conn.RemoteAddr().Network(),
-		BoardID: boardId,
-		IP: conn.RemoteAddr().String(),
-		User: user,
+		ID:                 cuid.New(),
+		DeviceId:           user.UserId + conn.RemoteAddr().Network(),
+		BoardID:            boardId,
+		IP:                 conn.RemoteAddr().String(),
+		User:               user,
 		CanReceiveMessages: true,
 	}
 	client.Send = func(messageType int, message []byte) {
 		if err := conn.WriteMessage(messageType, message); err != nil {
-			controller.RemoveClient(*client)
+			board.SetCanReceiveMessages(client, false)
 			conn.Close()
 			log.Println("client.send", err)
 			return
 		}
 	}
-	boardIndex, _ := controller.findBoard(boardId)
 	storedPrayers, _ := json.Marshal(controller.boards[boardIndex].GetBoardData())
 	client.Send(1, storedPrayers)
 	controller.AddClient(*client)
@@ -63,9 +79,9 @@ func (controller *Controller) Subscribe(w http.ResponseWriter, r *http.Request) 
 			log.Println("Message Type:", messageType)
 			log.Println(string(message))
 			if err != nil {
-				controller.RemoveClient(*client)
+				board.SetCanReceiveMessages(client, false)
 				conn.Close()
-				log.Println(err)
+				log.Println("client.receive", err)
 				return
 			}
 			controller.broadcast(boardId, client, message, messageType)

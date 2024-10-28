@@ -1,0 +1,155 @@
+basePath: /
+definitions:
+  model.Board:
+    properties:
+      boards:
+        items:
+          $ref: '#/definitions/model.BoardMetadata'
+        type: array
+      clients:
+        items:
+          $ref: '#/definitions/model.Client'
+        type: array
+      id:
+        type: integer
+      prayers:
+        items:
+          $ref: '#/definitions/model.Prayer'
+        type: array
+      title:
+        type: string
+    type: object
+  model.BoardMetadata:
+    properties:
+      id:
+        type: integer
+      title:
+        type: string
+    type: object
+  model.Client:
+    properties:
+      boardId:
+        type: string
+      canReceiveMessages:
+        type: boolean
+      deviceId:
+        type: string
+      id:
+        type: string
+      ip:
+        type: string
+      user:
+        $ref: '#/definitions/model.User'
+    type: object
+  model.Comment:
+    properties:
+      comment:
+        type: string
+      id:
+        type: integer
+      prayer_id:
+        type: integer
+      user:
+        $ref: '#/definitions/model.User'
+    type: object
+  model.Event:
+    properties:
+      action:
+        type: string
+      data:
+        type: string
+      type:
+        type: string
+    type: object
+  model.Prayer:
+    properties:
+      boardId:
+        type: integer
+      comments:
+        items:
+          $ref: '#/definitions/model.Comment'
+        type: array
+      description:
+        type: string
+      id:
+        type: integer
+      title:
+        type: string
+      user:
+        $ref: '#/definitions/model.User'
+    type: object
+  model.User:
+    properties:
+      email:
+        type: string
+      firstName:
+        type: string
+      lastName:
+        type: string
+      screenName:
+        type: string
+      userId:
+        type: string
+      userName:
+        type: string
+    type: object
+host: prayer-service-495160257238.us-east4.run.app
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: This is a websocket server offering broadcast and user specific code.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Prayer Service API
+  version: "1.0"
+paths:
+  /subscribe:
+    get:
+      consumes:
+      - application/json
+      description: This endpoint allows a user to subscribe to a board and receives
+        all messages from the board
+      parameters:
+      - description: Event data
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/model.Event'
+      - description: Board ID
+        in: header
+        name: Board
+        required: true
+        type: string
+      - description: Authentication header
+        in: header
+        name: Token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Board'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: User subscribes to a board
+      tags:
+      - boards
+swagger: "2.0"

@@ -2,6 +2,7 @@ package model
 
 type Client struct {
 	ID   string `json:"id"`
+	DeviceId   string `json:"deviceId"`
 	BoardID   string `json:"boardId"`
 	IP   string `json:"ip"`
 	User User `json:"user"`

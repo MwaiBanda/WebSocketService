@@ -62,7 +62,7 @@ func GetInstance() *Controller {
 							},
 						},
 					},
-				}, Clients: []model.Client{}, Boards: []model.Board{
+				}, Clients: []model.Client{}, Boards: []model.BoardMetadata{
 					{
 						ID:    1,
 						Title: "General",
@@ -104,7 +104,7 @@ func GetInstance() *Controller {
 							},
 						},
 					},
-				}, Clients: []model.Client{}, Boards: []model.Board{
+				}, Clients: []model.Client{}, Boards: []model.BoardMetadata{
 					{
 						ID:    1,
 						Title: "General",
@@ -152,7 +152,7 @@ func GetInstance() *Controller {
 			}
 			board, _ := json.Marshal(c.boards[boardIndex].GetBoardData())
 			for _, client := range c.boards[boardIndex].Clients {
-				if client.BoardID == boardId {
+				if client.CanReceiveMessages {
 					client.Send(messageType, board)
 					log.Println("Broadcasting message")
 					log.Println("Sending message to client")
@@ -216,16 +216,10 @@ func (controller *Controller) findBoard(boardId string) (int, model.Board) {
 	}
 	return 0, model.Board{}
 }
-func (controller *Controller) AddClient(client model.Client) {
-	filtered := []model.Client{}
-	boardIndex, board := controller.findBoard(client.BoardID)
-	for _, c := range controller.boards[boardIndex].Clients {
-		if c.ID != client.ID {
-			filtered = append(filtered, c)
 
-		}
-	}
-	controller.boards[boardIndex].Clients = filtered
+
+func (controller *Controller) AddClient(client model.Client) {
+	boardIndex, board := controller.findBoard(client.BoardID)
 	client.SetBoardId(strconv.Itoa(board.ID))
 	controller.boards[boardIndex].Clients = append(controller.boards[boardIndex].Clients, client)
 	log.Println("Number of clients:", len(controller.boards[boardIndex].Clients))
@@ -272,13 +266,13 @@ func (controller *Controller) Auth(f http.HandlerFunc) http.HandlerFunc {
 		}
 
 		log.Println("Token:", token)
-		log.Println(r.URL.Path)
 		user, err := controller.getProfile(token)
 		if err != nil {
 			log.Println("Unauthorized", r.URL.Path)
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
+		log.Println(r.URL.Path, "Device:", user.UserName + r.RemoteAddr)
 		req := r.WithContext(context.WithValue(r.Context(), UserKey, user))
 		f(w, req)
 	}

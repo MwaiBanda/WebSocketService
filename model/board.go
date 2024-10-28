@@ -9,8 +9,13 @@ type Board struct {
 	ID          int     `json:"id"`
 	Title       string    `json:"title"`
 	Prayers    []Prayer  `json:"prayers"`
-	Boards	 []Board   `json:"boards"`
+	Boards	 []BoardMetadata   `json:"boards"`
 	Clients    []Client `json:"clients"`
+}
+
+type BoardMetadata struct {
+	ID          int     `json:"id"`
+	Title       string    `json:"title"`
 }
 
 type BoardEvent struct {
@@ -20,7 +25,7 @@ type BoardData struct {
 	ID          int       `json:"id"`
 	Title       string    `json:"title"`
 	Prayers    []Prayer  `json:"prayers"`
-	Boards	 []Board   `json:"boards"`
+	Boards	 []BoardMetadata   `json:"boards"`
 }
 
 func (b *Board) GetBoardData() BoardData {
@@ -34,7 +39,7 @@ func (b *Board) GetBoardData() BoardData {
 func (b *Board) SetCanReceiveMessages(client *Client, canReceiveMessages bool) {
 	for _, c := range b.Clients {
 		if c.ID == client.ID {
-		c.SetCanReceiveMessages(canReceiveMessages)
+		   c.SetCanReceiveMessages(canReceiveMessages)
 		}
 	}
 }
@@ -58,9 +63,18 @@ func (b *Board) RemoveClient(client Client) {
 
 func (b *Board) HasClient(client Client) bool {
 	for _, c := range b.Clients {
-		if c.ID == client.ID {
+		if c.DeviceId == client.DeviceId {
 			return true
 		}
 	}
 	return false
+}
+
+func (b *Board) GetClientIndex(client Client) int {
+	for i, c := range b.Clients {
+		if c.DeviceId == client.DeviceId {
+			return i
+		}
+	}
+	return -1
 }
