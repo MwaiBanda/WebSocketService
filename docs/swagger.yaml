@@ -116,8 +116,7 @@ paths:
       parameters:
       - description: Event data
         in: body
-        name: message
-        required: true
+        name: event
         schema:
           $ref: '#/definitions/model.Event'
       - description: Board ID
@@ -151,5 +150,5 @@ paths:
             type: string
       summary: User subscribes to a board
       tags:
-      - boards
+      - Boards
 swagger: "2.0"

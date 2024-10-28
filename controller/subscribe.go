@@ -14,10 +14,10 @@ import (
 // Subscribe godoc
 // @Summary      User subscribes to a board
 // @Description  This endpoint allows a user to subscribe to a board and receives all messages from the board
-// @Tags         boards
+// @Tags         Boards
 // @Accept       json
 // @Produce      json
-// @Param		 message	body	model.Event	true	"Event data"
+// @Param		 event	body	model.Event	false	"Event data"
 // @Param		 Board	header		string	true	"Board ID"
 // @Param		 Token	header		string	true	"Authentication header"
 // @Success      200  				{object}  	model.Board

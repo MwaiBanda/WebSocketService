@@ -34,15 +34,14 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "boards"
+                    "Boards"
                 ],
                 "summary": "User subscribes to a board",
                 "parameters": [
                     {
                         "description": "Event data",
-                        "name": "message",
+                        "name": "event",
                         "in": "body",
-                        "required": true,
                         "schema": {
                             "$ref": "#/definitions/model.Event"
                         }
