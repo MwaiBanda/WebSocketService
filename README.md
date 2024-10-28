@@ -2,7 +2,7 @@
 ![Screenshot 2024-10-28 at 5 36 22 PM](https://github.com/user-attachments/assets/3505d20a-781e-481e-9409-4fcc505589ab)
 This service provides broadcasting messages to clients subscribed to a board and as well as sending one-to-one messages to clients 
 ### Useful links
-`WebSocket Endpoint` - [Subscribe to board](prayer-service-495160257238.us-east4.run.app/subscribe)
+`WebSocket Endpoint` - wss://prayer-service-495160257238.us-east4.run.app/subscribe
 
 `Swagger Docs` - [Swagger Docs](https://prayer-service-495160257238.us-east4.run.app/docs/index.html)
 
