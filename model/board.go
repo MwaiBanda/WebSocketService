@@ -1,6 +1,8 @@
 package model
 
-import "strconv"
+import (
+	"strconv"
+)
 
 
 type Board struct {
@@ -29,10 +31,19 @@ func (b *Board) GetBoardData() BoardData {
 		Boards: b.Boards,
 	}
 }
+func (b *Board) SetCanReceiveMessages(client *Client, canReceiveMessages bool) {
+	for _, c := range b.Clients {
+		if c.ID == client.ID {
+		c.SetCanReceiveMessages(canReceiveMessages)
+		}
+	}
+}
 
 func (b *Board) AddClient(client Client) {
+	if !b.HasClient(client) {
 	client.SetBoardId(strconv.Itoa(b.ID))
 	b.Clients = append(b.Clients, client)
+	}
 }
 
 func (b *Board) RemoveClient(client Client) {
@@ -43,4 +54,13 @@ func (b *Board) RemoveClient(client Client) {
 		}
 	}
 	b.Clients = filtered
+}
+
+func (b *Board) HasClient(client Client) bool {
+	for _, c := range b.Clients {
+		if c.ID == client.ID {
+			return true
+		}
+	}
+	return false
 }

@@ -7,8 +7,6 @@ import (
 	"net/http"
 	"os"
 	"strconv"
-
-	"github.com/lucsky/cuid"
 )
 
 func (controller *Controller) Subscribe(w http.ResponseWriter, r *http.Request) {
@@ -18,11 +16,7 @@ func (controller *Controller) Subscribe(w http.ResponseWriter, r *http.Request) 
 		log.Println(err)
 		return
 	}
-	deviceId := r.Header.Get("Device_id")
 	boardId := r.Header.Get("Board")
-	if len(deviceId) == 0 {
-		deviceId = cuid.New()
-	}
 	if len(boardId) == 0 {
 		boardId = "1"
 	}
@@ -38,10 +32,11 @@ func (controller *Controller) Subscribe(w http.ResponseWriter, r *http.Request) 
 	user, _ := r.Context().Value(UserKey).(model.User)
 	log.Println("User:", user)
 	client := &model.Client{
-		ID: deviceId,
+		ID: user.UserId + conn.RemoteAddr().Network(),
 		BoardID: boardId,
 		IP: conn.RemoteAddr().String(),
 		User: user,
+		CanReceiveMessages: true,
 	}
 	client.Send = func(messageType int, message []byte) {
 		if err := conn.WriteMessage(messageType, message); err != nil {
@@ -73,7 +68,7 @@ func (controller *Controller) Subscribe(w http.ResponseWriter, r *http.Request) 
 				log.Println(err)
 				return
 			}
-			controller.broadcast(boardId, *client, message, messageType)
+			controller.broadcast(boardId, client, message, messageType)
 		}
 	}()
 }

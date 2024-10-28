@@ -18,7 +18,7 @@ import (
 type Controller struct {
 	Upgrader   websocket.Upgrader
 	boards    []model.Board
-	broadcast  func(string, model.Client, []byte, int)
+	broadcast  func(string, *model.Client, []byte, int)
 }
 
 func GetInstance() *Controller {
@@ -119,7 +119,7 @@ func GetInstance() *Controller {
 	}
 	c.broadcast = func(
 		boardId string,
-		client model.Client,
+		client *model.Client,
 		message []byte,
 		messageType int,
 	) {
@@ -152,10 +152,12 @@ func GetInstance() *Controller {
 			}
 			board, _ := json.Marshal(c.boards[boardIndex].GetBoardData())
 			for _, client := range c.boards[boardIndex].Clients {
-				client.Send(messageType, board)
-				log.Println("Broadcasting message")
-				log.Println("Sending message to client")
-				log.Println(client.User.UserName)
+				if client.BoardID == boardId {
+					client.Send(messageType, board)
+					log.Println("Broadcasting message")
+					log.Println("Sending message to client")
+					log.Println(client.User.UserName)
+				}
 			}
 			log.Println("Number of clients:", len(c.boards[boardIndex].Clients))
 		} else if event.Type == constants.COMMENT {
@@ -178,10 +180,12 @@ func GetInstance() *Controller {
 			}
 			board, _ := json.Marshal(c.boards[boardIndex].GetBoardData())
 			for _, client := range c.boards[boardIndex].Clients {
-				client.Send(messageType, board)
-				log.Println("Broadcasting message")
-				log.Println("Sending message to client")
-				log.Println(client.User.UserName)
+				if client.CanReceiveMessages {
+					client.Send(messageType, board)
+					log.Println("Broadcasting message")
+					log.Println("Sending message to client")
+					log.Println(client.User.UserName)
+				}
 			}
 		} else if event.Type == constants.BOARD {
 			if event.Action == constants.UPDATE {
@@ -192,11 +196,8 @@ func GetInstance() *Controller {
 
 				log.Println("Switching to Board ID:", board.ID)
 				newBoardId := strconv.Itoa(board.ID)
-				client.SetBoardId(newBoardId)
 				_, newBoard := c.findBoard(newBoardId)
-				currentBoard.RemoveClient(client)
-				log.Println("New board:", newBoard.Clients, "Old board:", currentBoard.Clients)
-				newBoard.AddClient(client)
+				c.MoveClient(newBoardId, client)
 				log.Println("New board:", newBoard.Clients, "Old board:", currentBoard.Clients)
 				boardJson, _ := json.Marshal(newBoard.GetBoardData())
 				client.Send(messageType, boardJson)
@@ -228,6 +229,23 @@ func (controller *Controller) AddClient(client model.Client) {
 	client.SetBoardId(strconv.Itoa(board.ID))
 	controller.boards[boardIndex].Clients = append(controller.boards[boardIndex].Clients, client)
 	log.Println("Number of clients:", len(controller.boards[boardIndex].Clients))
+}
+
+func (controller *Controller) MoveClient(newBoardId string, client *model.Client) {
+	newBoardIndex, _ := controller.findBoard(newBoardId)
+	boardIndex, board := controller.findBoard(client.BoardID)
+	for _, c := range controller.boards[boardIndex].Clients {
+		if c.ID == client.ID {
+			newClient := client
+			newClient.SetBoardId(newBoardId)
+			client.SetBoardId(newBoardId)
+			newClient.SetCanReceiveMessages(true)
+			controller.boards[newBoardIndex].AddClient(*newClient)
+			controller.boards[newBoardIndex].SetCanReceiveMessages(newClient, true)
+			board.SetCanReceiveMessages(client, false)
+			break
+		}
+	}
 }
 
 func (controller *Controller) RemoveClient(client model.Client) {
