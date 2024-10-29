@@ -39,14 +39,6 @@ const docTemplate = `{
                 "summary": "User subscribes to a board",
                 "parameters": [
                     {
-                        "description": "Event data",
-                        "name": "event",
-                        "in": "body",
-                        "schema": {
-                            "$ref": "#/definitions/model.Event"
-                        }
-                    },
-                    {
                         "type": "string",
                         "description": "Board ID",
                         "name": "Board",
@@ -168,20 +160,6 @@ const docTemplate = `{
                 },
                 "user": {
                     "$ref": "#/definitions/model.User"
-                }
-            }
-        },
-        "model.Event": {
-            "type": "object",
-            "properties": {
-                "action": {
-                    "type": "string"
-                },
-                "data": {
-                    "type": "string"
-                },
-                "type": {
-                    "type": "string"
                 }
             }
         },

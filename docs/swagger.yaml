@@ -52,15 +52,6 @@ definitions:
       user:
         $ref: '#/definitions/model.User'
     type: object
-  model.Event:
-    properties:
-      action:
-        type: string
-      data:
-        type: string
-      type:
-        type: string
-    type: object
   model.Prayer:
     properties:
       boardId:
@@ -114,11 +105,6 @@ paths:
       description: This endpoint allows a user to subscribe to a board and receives
         all messages from the board
       parameters:
-      - description: Event data
-        in: body
-        name: event
-        schema:
-          $ref: '#/definitions/model.Event'
       - description: Board ID
         in: header
         name: Board

@@ -17,14 +17,13 @@ import (
 // @Tags         Boards
 // @Accept       json
 // @Produce      json
-// @Param		 event	body	model.Event	false	"Event data"
 // @Param		 Board	header		string	true	"Board ID"
 // @Param		 Token	header		string	true	"Authentication header"
 // @Success      200  				{object}  	model.Board
 // @Failure		 400				{string}	string	"Bad Request"
 // @Failure		 401				{string}	string	"Unauthorized"
 // @Failure		 500				{string}	string	"Internal Server Error"
-// @Router       /subscribe [get]
+// @Router       /subscribe    [get]
 func (controller *Controller) Subscribe(w http.ResponseWriter, r *http.Request) {
 	conn, err := controller.Upgrader.Upgrade(w, r, nil)
 	log.Println("New connection:", conn.RemoteAddr().String())
