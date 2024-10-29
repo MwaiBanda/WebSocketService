@@ -27,6 +27,7 @@ import (
 
 //	@license.name	Apache 2.0
 //	@license.url	http://www.apache.org/licenses/LICENSE-2.0.html
+//
 // @host		prayer-service-495160257238.us-east4.run.app
 // @BasePath	/
 func main() {
@@ -34,12 +35,12 @@ func main() {
 	router := chi.NewRouter()
 
 	router.Use(cors.Handler(cors.Options{
-	  AllowedOrigins:   []string{"https://*", "http://*", "ws://*", "wss://*"},
-	  AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-	  AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
-	  ExposedHeaders:   []string{"Link"},
-	  AllowCredentials: false,
-	  MaxAge:           300, 
+		AllowedOrigins:   []string{"https://*", "http://*", "ws://*", "wss://*"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: false,
+		MaxAge:           300,
 	}))
 	err := godotenv.Load()
 	if err != nil {
@@ -79,7 +80,7 @@ func main() {
 		  });`),
 		httpSwagger.Plugins([]string{"UrlMutatorPlugin"}),
 		httpSwagger.UIConfig(map[string]string{
-			"showExtensions":        "true",
+			"showExtensions": "true",
 			"onComplete": fmt.Sprintf(`() => {
 			window.ui.setScheme(['wss', 'https', 'http', 'ws']);
 			window.ui.setHost('%s');

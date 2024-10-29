@@ -90,12 +90,12 @@ info:
     email: support@swagger.io
     name: API Support
     url: http://www.swagger.io/support
-  description: This is a websocket server offering broadcast and user specific code.
+  description: This is a websocket server offering broadcast and user specific messaging.
   license:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
   termsOfService: http://swagger.io/terms/
-  title: Prayer Service API
+  title: Prayer Service
   version: "1.0"
 paths:
   /subscribe:
