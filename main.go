@@ -11,14 +11,14 @@ import (
 	"strings"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/joho/godotenv"
 	"github.com/go-chi/cors"
+	"github.com/joho/godotenv"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
 
-//	@title			Prayer Service API
+//	@title			Prayer Service
 //	@version		1.0
-//	@description	This is a websocket server offering broadcast and user specific code.
+//	@description	This is a websocket server offering broadcast and user specific messaging.
 //	@termsOfService	http://swagger.io/terms/
 
 //	@contact.name	API Support
@@ -27,12 +27,12 @@ import (
 
 //	@license.name	Apache 2.0
 //	@license.url	http://www.apache.org/licenses/LICENSE-2.0.html
-
 // @host		prayer-service-495160257238.us-east4.run.app
 // @BasePath	/
 func main() {
 	controller := controller.GetInstance()
 	router := chi.NewRouter()
+
 	router.Use(cors.Handler(cors.Options{
 	  AllowedOrigins:   []string{"https://*", "http://*", "ws://*", "wss://*"},
 	  AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
@@ -81,7 +81,7 @@ func main() {
 		httpSwagger.UIConfig(map[string]string{
 			"showExtensions":        "true",
 			"onComplete": fmt.Sprintf(`() => {
-			window.ui.setScheme('wss');
+			window.ui.setScheme(['wss', 'https', 'http', 'ws']);
 			window.ui.setHost('%s');
 			window.ui.setBasePath('%s');
 		}`, "prayer-service-495160257238.us-east4.run.app", "/"),
@@ -98,6 +98,7 @@ func main() {
 }
 
 func FileServer(r chi.Router, path string, root http.FileSystem) {
+
 	if strings.ContainsAny(path, "{}*") {
 		panic("FileServer does not permit any URL parameters.")
 	}
